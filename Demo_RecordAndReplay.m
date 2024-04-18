@@ -30,7 +30,7 @@ data = TouchXcontroller_mex('GetRecordedPositions');
 fprintf('size(data): %d %d\n', size(data, 1), size(data, 2));
 
 %% calculate the force
-stiffness = 0.8;
+stiffness = 1.5;
 force = TouchXcontroller_mex('Pos2Force', data, stiffness);
 
 

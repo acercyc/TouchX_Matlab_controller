@@ -5,12 +5,8 @@
             "includePath": [
                 "${default}",
                 "${workspaceFolder}/**",
-                "C:\\OpenHaptics\\Developer\\3.5.0\\include/**",
-                "C:\\OpenHaptics\\Developer\\3.5.0\\utilities\\include/**",
-                "C:\\OpenHaptics\\Developer\\3.5.0\\QuickHaptics\\header/**",
-                // "C:\\OpenHaptics\\Developer\\3.5.0\\lib\\Release/**",
-                // "C:\\OpenHaptics\\Developer\\3.5.0\\utilities\\lib\\Release/**",
-                "C:\\Program Files\\R2021a\\extern\\include/**"
+                "lib/**",
+                "C:\\Program Files\\MATLAB\\R2024a\\extern\\include/**",
             ],
             "defines": [
                 "_DEBUG",

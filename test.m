@@ -1,0 +1,1 @@
+TouchXcontroller_mex('DisableDevice');

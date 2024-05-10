@@ -8,7 +8,7 @@
 #include <thread>
 
 // Initialisation
-HHD hHD;
+HHD hHD = -1;
 using Clock = std::chrono::steady_clock;
 std::chrono::steady_clock::time_point system_start_time = Clock::now();
 std::vector<hduVector3Dd> recordedPositions;
@@ -121,6 +121,12 @@ std::vector<hduVector3Dd> pos2force(std::vector<hduVector3Dd> positions, double 
 // Initialize the haptic device
 void InitDevice()
 {
+    if (hHD != -1)
+    {
+        mexPrintf("**Haptic device has already initialized.**\n");
+        return;
+    }
+
     HDErrorInfo error;
     hHD = hdInitDevice(HD_DEFAULT_DEVICE);
     if (HD_DEVICE_ERROR(error = hdGetError()))
@@ -131,12 +137,20 @@ void InitDevice()
     hdEnable(HD_FORCE_OUTPUT);
     hdEnable(HD_MAX_FORCE_CLAMPING);
     hdStartScheduler();
+    isScheduled = true;
     mexPrintf("***Haptic device initialized***\n");
 }
 
 // Disable the haptic device
 void DisableDevice()
 {
+
+    if (hHD == -1)
+    {
+        mexPrintf("**Haptic device has already disabled.**\n");
+        return;
+    }
+
     HDErrorInfo error;
     hdDisable(HD_FORCE_OUTPUT);
     hdDisableDevice(hHD);
@@ -147,12 +161,23 @@ void DisableDevice()
     }
 
     mexPrintf("***Haptic device disabled***\n");
+    hHD = -1;
 }
 
 hduVector3Dd GetPosition()
 {
     hduVector3Dd position;
-    hdGetDoublev(HD_CURRENT_POSITION, position);
+    // check scheduled
+    if (isScheduled)
+    {
+        hdGetDoublev(HD_CURRENT_POSITION, position);
+    }
+    else
+    {
+        hdBeginFrame(hHD);
+        hdGetDoublev(HD_CURRENT_POSITION, position);
+        hdEndFrame(hHD);
+    }
     return position;
 }
 
@@ -189,7 +214,7 @@ HDCallbackCode HDCALLBACK RecordPositionAsynchronous(void *data)
         recordedPositions.push_back(position);
         hdEndFrame(hHD);
         return HD_CALLBACK_CONTINUE;
-    } 
+    }
     else
     {
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(Clock::now() - startTime).count();
@@ -353,7 +378,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         {
             // get recording duration
             duration = mxGetScalar(prhs[1]);
-        } else {
+        }
+        else
+        {
             mexErrMsgIdAndTxt("HapticDevice:InvalidInput", "Invalid input.");
             return;
         }
@@ -494,7 +521,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         std::vector<hduVector3Dd> forces = pos2force(positions, stiffness);
         plhs[0] = vecs2mat(forces);
     }
-    
+
     // recordedPositions to playedForcesBuffer
     else if (strcmp(cmd, "RecordedPositionsToPlayedForcesBuffer") == 0)
     {
